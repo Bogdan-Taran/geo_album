@@ -20,6 +20,12 @@ final router = GoRouter(
             GoRoute(
               path: '/gallery',
               builder: (context, state) => const GalleryScreen(),
+              routes: [
+                GoRoute(
+                    path: 'photo',
+                  builder: (context, state) => const PhotoLookingScreen(),
+                ),
+              ]
             ),
           ],
         ),
