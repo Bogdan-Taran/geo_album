@@ -29,11 +29,7 @@ class RootScreen extends StatelessWidget {
       label: 'Галерея',
     ),
     const BottomNavigationBarItem(
-        icon: Icon(Icons.photo),
-        label: 'Фотографии',
-    ),
-    const BottomNavigationBarItem(
-        icon: Icon(Icons.person),
+        icon: Icon(Icons.map),
         label: 'Карта',
     ),
   ];

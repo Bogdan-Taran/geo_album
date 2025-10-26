@@ -18,14 +18,14 @@ final router = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/gallery',
-              builder: (context, state) => const GalleryScreen(),
-              routes: [
-                GoRoute(
+                path: '/gallery',
+                builder: (context, state) => const GalleryScreen(title: 'Галерея',),
+                routes: [
+                  GoRoute(
                     path: 'photo',
-                  builder: (context, state) => const PhotoLookingScreen(),
-                ),
-              ]
+                    builder: (context, state) => const PhotoLookingScreen(),
+                  ),
+                ]
             ),
           ],
         ),

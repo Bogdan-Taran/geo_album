@@ -1,56 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
+import 'photo_looking_screen.dart';
 
-const _photos = [
-  'photo1',
-  'photo2',
-  'photo3',
-  'photo4',
-  'photo5',
-];
 
 const whiteColor = Colors.white;
 const blackColor = Colors.black;
 const backColorScreens = Color(0xff100F14);
 
 class GalleryScreen extends StatelessWidget {
-  const GalleryScreen({Key? key, required this.title}) : super(key: key);
+  const GalleryScreen({super.key, required this.title});
   final String title;
-
-  @override
-  State<GalleryScreen> createState() => _GalleryScreen();
-}
-
-class _GalleryScreen extends State<GalleryScreen> {
-  final urlImages = [
-    'assets/Pictures/image1.jpg',
-    'assets/Pictures/image2.jpg',
-    'assets/Pictures/image3.jpg',
-    'assets/Pictures/image4.jpg',
-    'assets/Pictures/image5.jpg',
-    'assets/Pictures/image6.jpg',
-  ];
-  var transformedImages = [];
-
-  Future<dynamic> getSizeIfImages() async {
-    transformedImages = [];
-    for (int i = 0; i < urlImages.length; i++) {
-      final imageObject = {};
-      await rootBundle.load(urlImages[i]).then((value) =>
-      {
-        imageObject['path'] = urlImages[i],
-        imageObject['size'] = value.lengthInBytes,
-      });
-      transformedImages.add(imageObject);
-    }
-  }
-
-  @override
-  void initState() {
-    getSizeIfImages();
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,26 +20,36 @@ class _GalleryScreen extends State<GalleryScreen> {
         backgroundColor: backColorScreens,
         centerTitle: true,
         title: Text(
-          widget.title,
+          title,
           style: const TextStyle(color: whiteColor),
         ),
         iconTheme: const IconThemeData(color: whiteColor),
       ),
 
       body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Expanded(
-                  child: Container(
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _getSizeOfImages(), // Вызываем асинхронную функцию
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              // Показываем индикатор загрузки, пока данные загружаются
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              // Показываем ошибку, если она произошла
+              return Center(child: Text('Ошибка: ${snapshot.error}'));
+            } else if (snapshot.hasData) {
+              // Данные успешно загружены, строим GridView
+              final transformedImages = snapshot.data!;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
                       decoration: const BoxDecoration(
                         color: whiteColor,
                       ),
                       child: GridView.builder(
-                        gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3,
                           crossAxisSpacing: 5,
                           mainAxisSpacing: 5,
@@ -88,30 +58,53 @@ class _GalleryScreen extends State<GalleryScreen> {
                           return RawMaterialButton(
                             child: InkWell(
                               child: Ink.image(
-                                image: AssetImage(
-                                  transformedImages[index]['path']),
+                                image: AssetImage(transformedImages[index]['path']), // Исправлено
                                 height: 300,
                                 fit: BoxFit.cover,
                               ),
                             ),
                             onPressed: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          GalleryWidget(
-                                            urlImages: urlImages,
-                                            index: index,
-                                          )));
-                            },
+                              context.go('/gallery/photo', extra: {
+                                'urlImages': transformedImages.map((e) => e['path'] as String).toList(),
+                                'index': index,
+                              });
+                              },
                           );
                         },
                         itemCount: transformedImages.length,
-                      )))
-            ],
-          )),
-
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            } else {
+              // Если данных нет, но ошибки тоже нет
+              return const Center(child: Text('Нет изображений'));
+            }
+          },
+        ),
+      ),
     );
   }
 
+  Future<List<Map<String, dynamic>>> _getSizeOfImages() async {
+    final urlImages = [
+      'assets/Pictures/image1.png',
+      'assets/Pictures/image2.png',
+      'assets/Pictures/image3.png',
+      'assets/Pictures/image4.jpg',
+    ];
+
+    List<Map<String, dynamic>> transformedImages = [];
+    for (int i = 0; i < urlImages.length; i++) {
+      final imageObject = <String, dynamic>{};
+      await rootBundle.load(urlImages[i]).then((value) {
+        imageObject['path'] = urlImages[i];
+        imageObject['size'] = value.lengthInBytes;
+      });
+      transformedImages.add(imageObject);
+    }
+    return transformedImages;
+  }
 }
+
