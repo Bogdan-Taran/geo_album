@@ -4,18 +4,14 @@ import '/photo_looking_screen.dart';
 import '/map_photos.dart';
 import '/root_screen.dart';
 
-
-
-
 final router = GoRouter(
   initialLocation: '/gallery',
   routes: [
-    // BottomNavigationBar
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
           RootScreen(navigationShell: navigationShell),
       branches: [
-        StatefulShellBranch(
+        StatefulShellBranch(  //index 0 - Галерея
           routes: [
             GoRoute(
                 path: '/gallery',
@@ -29,15 +25,8 @@ final router = GoRouter(
             ),
           ],
         ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/photo',
-              builder: (context, state) => const PhotoLookingScreen(),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
+
+        StatefulShellBranch(  //index 1
           routes: [
             GoRoute(
               path: '/map',
