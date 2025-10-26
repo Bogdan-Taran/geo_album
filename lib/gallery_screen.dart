@@ -15,6 +15,7 @@ class GalleryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backColorScreens,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: backColorScreens,
@@ -46,7 +47,7 @@ class GalleryScreen extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
                       decoration: const BoxDecoration(
-                        color: whiteColor,
+                        color: backColorScreens,
                       ),
                       child: GridView.builder(
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

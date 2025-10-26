@@ -38,25 +38,31 @@ class CustomNavBar extends StatelessWidget {
         //индекс 'map' ветки - 1 (0-indexed)
         onTap: () => _onTap(1),
       ),
-      // _NavBarItem(
-      //   icon: Icons.photo_outlined,
-      //   activeIcon: Icons.photo,
-      //   label: 'Фото',
-      //   isActive: currentIndex == 1,
-      //   //индекс 'map' ветки - 2 (0-indexed)
-      //   onTap: () => _onTap(2),
-      // ),
     ];
 
     return Container(
+      margin: EdgeInsets.only(bottom: 30),
+
       height: 80,
+      width: 200,
       decoration: BoxDecoration(
-        color: Color(0xff100F14),
+
+        gradient: LinearGradient(
+            colors: <Color>[
+              Color(0xcd100f14),
+              Color(0xcb100f14),
+              Color(0xcb222222),
+            ],
+          begin: Alignment.bottomLeft,
+          end: Alignment.topRight,
+
+        ),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: items,
+
       ),
     );
   }
@@ -91,7 +97,8 @@ class _NavBarItem extends StatelessWidget{
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween, //будет занимать минимум места
+          mainAxisAlignment: MainAxisAlignment.center,
+          spacing: 1,
           children: [
             Icon(
               isActive ? activeIcon : icon,
