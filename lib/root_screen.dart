@@ -15,11 +15,16 @@ class RootScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-        backgroundColor: backColorScreens,
-        bottomNavigationBar: CustomNavBar(
-        currentIndex: navigationShell.currentIndex, //передаём текущий индекс
-           navigationShell: navigationShell,
-      )
+        backgroundColor: Colors.white,
+      bottomNavigationBar: Container(
+        alignment: Alignment.center,
+        height: 95,
+        // padding: EdgeInsets.only(bottom: 30),
+        child: CustomNavBar(
+          currentIndex: navigationShell.currentIndex,
+          navigationShell: navigationShell,
+        ),
+      ),
     );
   }
 

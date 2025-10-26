@@ -22,55 +22,55 @@ class CustomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      _NavBarItem(
-        icon: Icons.photo_library_outlined,
-        activeIcon: Icons.photo_library,
-        //активное состояние
-        label: 'Галерея',
-        isActive: currentIndex == 0,
-        onTap: () => _onTap(0),
+      Expanded(
+        child: _NavBarItem(
+          icon: Icons.photo_library_outlined,
+          activeIcon: Icons.photo_library,
+          //активное состояние
+          label: 'Галерея',
+          isActive: currentIndex == 0,
+          onTap: () => _onTap(0),
+        ),
       ),
-      _NavBarItem(
-        icon: Icons.map_outlined,
-        activeIcon: Icons.map,
-        label: 'Карта',
-        isActive: currentIndex == 1,
-        //индекс 'map' ветки - 1 (0-indexed)
-        onTap: () => _onTap(1),
+      Expanded(
+        child: _NavBarItem(
+          icon: Icons.map_outlined,
+          activeIcon: Icons.map,
+          label: 'Карта',
+          isActive: currentIndex == 1,
+          //индекс 'map' ветки - 1 (0-indexed)
+          onTap: () => _onTap(1),
+        ),
       ),
     ];
 
     return Container(
       margin: EdgeInsets.only(bottom: 30),
-
       height: 80,
-      width: 200,
-      decoration: BoxDecoration(
 
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-            colors: <Color>[
-              Color(0xcd100f14),
-              Color(0xcb100f14),
-              Color(0xcb222222),
-            ],
+          colors: <Color>[
+            Color(0xcd100f14),
+            Color(0xcb100f14),
+            Color(0xcb222222),
+          ],
           begin: Alignment.bottomLeft,
           end: Alignment.topRight,
-
         ),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: items,
 
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: items,
       ),
     );
   }
 }
 
-
 //внутренний виджет для одной кнопки навигации
-class _NavBarItem extends StatelessWidget{
+class _NavBarItem extends StatelessWidget {
   const _NavBarItem({
     required this.icon,
     required this.activeIcon,
@@ -91,30 +91,33 @@ class _NavBarItem extends StatelessWidget{
       onTap: onTap,
       child: AnimatedContainer(
         duration: Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        //padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
           color: isActive ? Color(0xff1D1C21) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          spacing: 1,
-          children: [
-            Icon(
-              isActive ? activeIcon : icon,
-              color: isActive ? Color(0xffE1E0E0) : Color(0xff776C6B),
-              size: 24,
-            ),
-            const SizedBox(height: 4,),
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? Color(0xffFFFFFF) : Color(0xff776C6B),
-                fontSize: 12,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isActive ? activeIcon : icon,
+                color: isActive ? Color(0xffE1E0E0) : Color(0xff776C6B),
+                size: 24,
               ),
-            )
-          ],
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isActive ? Color(0xffFFFFFF) : Color(0xff776C6B),
+                  fontSize: 12,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
