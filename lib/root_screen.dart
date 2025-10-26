@@ -34,7 +34,7 @@ class RootScreen extends StatelessWidget {
     ),
     const BottomNavigationBarItem(
         icon: Icon(Icons.person),
-        label: 'Профиль',
+        label: 'Карта',
     ),
   ];
 

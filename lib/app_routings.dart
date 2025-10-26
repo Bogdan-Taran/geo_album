@@ -8,7 +8,7 @@ import '/root_screen.dart';
 
 
 final router = GoRouter(
-  initialLocation: '/',
+  initialLocation: '/gallery',
   routes: [
     // BottomNavigationBar
     StatefulShellRoute.indexedStack(
@@ -18,7 +18,7 @@ final router = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/',
+              path: '/gallery',
               builder: (context, state) => const GalleryScreen(),
             ),
           ],
@@ -26,7 +26,7 @@ final router = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/',
+              path: '/photo',
               builder: (context, state) => const PhotoLookingScreen(),
             ),
           ],
@@ -34,7 +34,7 @@ final router = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/',
+              path: '/map',
               builder: (context, state) => const MapPhotosScreen(),
             ),
           ],
