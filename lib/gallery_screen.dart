@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'photo_looking_screen.dart';
+import 'package:exif/exif.dart';
 
 
 const whiteColor = Colors.white;
@@ -29,14 +30,18 @@ class GalleryScreen extends StatelessWidget {
 
       body: SafeArea(
         child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _getSizeOfImages(), // Вызываем асинхронную функцию
+          future: _getSizeOfImagesAndExif(), // Вызываем асинхронную функцию
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               // Показываем индикатор загрузки, пока данные загружаются
               return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               // Показываем ошибку, если она произошла
-              return Center(child: Text('Ошибка: ${snapshot.error}'));
+              debugPrint('Ошибка в GalleryScreen: ${snapshot.error}');
+              if(snapshot.error != null){
+                debugPrint(snapshot.error.toString());
+              }
+              return Center(child: Text('Ошибка: ${snapshot.error}'),);
             } else if (snapshot.hasData) {
               // Данные успешно загружены, строим GridView
               final transformedImages = snapshot.data!;
@@ -59,7 +64,7 @@ class GalleryScreen extends StatelessWidget {
                           return RawMaterialButton(
                             child: InkWell(
                               child: Ink.image(
-                                image: AssetImage(transformedImages[index]['path']), // Исправлено
+                                image: AssetImage(transformedImages[index]['path']),
                                 height: 300,
                                 fit: BoxFit.cover,
                               ),
@@ -68,6 +73,7 @@ class GalleryScreen extends StatelessWidget {
                               context.go('/gallery/photo', extra: {
                                 'urlImages': transformedImages.map((e) => e['path'] as String).toList(),
                                 'index': index,
+                                'exifData': transformedImages[index]['exif'] as Map<String, IfdTag>?,
                               });
                               },
                           );
@@ -88,7 +94,8 @@ class GalleryScreen extends StatelessWidget {
     );
   }
 
-  Future<List<Map<String, dynamic>>> _getSizeOfImages() async {
+  //функция для получения данных из фотографий
+  Future<List<Map<String, dynamic>>> _getSizeOfImagesAndExif() async {
     final urlImages = [
       'assets/Pictures/image1.png',
       'assets/Pictures/image2.png',
@@ -99,13 +106,40 @@ class GalleryScreen extends StatelessWidget {
     List<Map<String, dynamic>> transformedImages = [];
     for (int i = 0; i < urlImages.length; i++) {
       final imageObject = <String, dynamic>{};
-      await rootBundle.load(urlImages[i]).then((value) {
+      try{
+        //load bytes from image
+        ByteData byteData = await rootBundle.load(urlImages[i]);
+        Uint8List bytes = byteData.buffer.asUint8List();
+
+        //save path and size
         imageObject['path'] = urlImages[i];
-        imageObject['size'] = value.lengthInBytes;
-      });
+        imageObject['size'] = bytes.lengthInBytes;
+
+        //extract exif data
+        Map<String, IfdTag>? exifData = await _extractExif(bytes);
+        imageObject['exif'] = exifData;
+      } catch (e, stack){
+        debugPrint('Ошибка при обработке ${urlImages[i]}: $e');
+//        debugPrintStack(stack: stack);
+        imageObject['exif'] = null;
+      }
       transformedImages.add(imageObject);
     }
     return transformedImages;
   }
+
+  //function to extract EXIF from bytes
+
+  Future<Map<String, IfdTag>?> _extractExif(Uint8List bytes) async {
+    try{
+      //use exif library
+      Map<String, IfdTag>? exif = await readExifFromBytes(bytes);
+      return exif;
+    } catch(e){
+      debugPrint('Ошибка при извлечении EXIF: $e');
+      return null;  //return null if there any error
+    }
+  }
+
 }
 
