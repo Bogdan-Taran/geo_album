@@ -47,7 +47,7 @@ class GalleryScreen extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
                       decoration: const BoxDecoration(
-                        color: Colors.white,
+                        color: backColorScreens,
                       ),
                       child: GridView.builder(
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

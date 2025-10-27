@@ -61,9 +61,12 @@ class CustomNavBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
 
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: items,
+      child: SizedBox(
+        width: 180,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: items,
+        ),
       ),
     );
   }
@@ -90,7 +93,7 @@ class _NavBarItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
+        duration: Duration(milliseconds: 50),
         //padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
           color: isActive ? Color(0xff1D1C21) : Colors.transparent,

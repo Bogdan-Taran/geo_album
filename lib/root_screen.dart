@@ -15,7 +15,7 @@ class RootScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-        backgroundColor: Colors.white,
+        backgroundColor: backColorScreens,
       bottomNavigationBar: Container(
         alignment: Alignment.center,
         height: 95,
