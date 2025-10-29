@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/services.dart'; // Для rootBundle
+import 'package:native_exif/native_exif.dart'; // Импортируем native_exif
+import 'package:path_provider/path_provider.dart'; // Для временных файлов
+import 'dart:io'; // Для File
 import 'photo_looking_screen.dart';
-import 'package:exif/exif.dart';
-
 
 const whiteColor = Colors.white;
 const blackColor = Colors.black;
@@ -27,23 +28,19 @@ class GalleryScreen extends StatelessWidget {
         ),
         iconTheme: const IconThemeData(color: whiteColor),
       ),
-
       body: SafeArea(
         child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _getSizeOfImagesAndExif(), // Вызываем асинхронную функцию
+          future: _getSizeOfImagesAndExif(context), // Вызываем новую асинхронную функцию
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              // Показываем индикатор загрузки, пока данные загружаются
               return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
-              // Показываем ошибку, если она произошла
               debugPrint('Ошибка в GalleryScreen: ${snapshot.error}');
-              if(snapshot.error != null){
+              if (snapshot.error != null) {
                 debugPrint(snapshot.error.toString());
               }
-              return Center(child: Text('Ошибка: ${snapshot.error}'),);
+              return Center(child: Text('Ошибка: ${snapshot.error}'));
             } else if (snapshot.hasData) {
-              // Данные успешно загружены, строим GridView
               final transformedImages = snapshot.data!;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -64,7 +61,7 @@ class GalleryScreen extends StatelessWidget {
                           return RawMaterialButton(
                             child: InkWell(
                               child: Ink.image(
-                                image: AssetImage(transformedImages[index]['path']),
+                                image: AssetImage(transformedImages[index]['path']), // Используем путь для отображения
                                 height: 300,
                                 fit: BoxFit.cover,
                               ),
@@ -73,9 +70,12 @@ class GalleryScreen extends StatelessWidget {
                               context.go('/gallery/photo', extra: {
                                 'urlImages': transformedImages.map((e) => e['path'] as String).toList(),
                                 'index': index,
-                                'exifData': transformedImages[index]['exif'] as Map<String, IfdTag>?,
+                                // Передаём геоданные (если есть)
+                                'coordinates': transformedImages[index]['coordinates'],
+                                // Опционально: передать путь к временному файлу, если PhotoLookingScreen будет его использовать напрямую
+                                // 'tempFilePath': transformedImages[index]['tempFilePath'],
                               });
-                              },
+                            },
                           );
                         },
                         itemCount: transformedImages.length,
@@ -85,7 +85,6 @@ class GalleryScreen extends StatelessWidget {
                 ],
               );
             } else {
-              // Если данных нет, но ошибки тоже нет
               return const Center(child: Text('Нет изображений'));
             }
           },
@@ -94,52 +93,59 @@ class GalleryScreen extends StatelessWidget {
     );
   }
 
-  //функция для получения данных из фотографий
-  Future<List<Map<String, dynamic>>> _getSizeOfImagesAndExif() async {
+  // Изменяем функцию для загрузки изображений, получения размера и EXIF
+  Future<List<Map<String, dynamic>>> _getSizeOfImagesAndExif(BuildContext context) async {
     final urlImages = [
-      'assets/Pictures/image1.png',
+      'assets/Pictures/image1.png', // Убедись, что файлы существуют
       'assets/Pictures/image2.png',
       'assets/Pictures/image3.png',
       'assets/Pictures/image4.jpg',
+      'assets/Pictures/image5.jpg',
+      'assets/Pictures/image6.jpg',
+      'assets/Pictures/image7.jpg',
     ];
 
     List<Map<String, dynamic>> transformedImages = [];
     for (int i = 0; i < urlImages.length; i++) {
       final imageObject = <String, dynamic>{};
-      try{
-        //load bytes from image
+      try {
+        // 1. Загружаем байты изображения из ассетов
         ByteData byteData = await rootBundle.load(urlImages[i]);
         Uint8List bytes = byteData.buffer.asUint8List();
 
-        //save path and size
+        // 2. Сохраняем путь и размер
         imageObject['path'] = urlImages[i];
         imageObject['size'] = bytes.lengthInBytes;
 
-        //extract exif data
-        Map<String, IfdTag>? exifData = await _extractExif(bytes);
-        imageObject['exif'] = exifData;
-      } catch (e, stack){
+        // 3. Создаём временный файл
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File('${tempDir.path}/temp_image_${i}_${DateTime.now().millisecondsSinceEpoch}.jpg'); // Добавим время, чтобы имена не совпадали
+        await tempFile.writeAsBytes(bytes);
+
+        // 4. Извлекаем EXIF данные через native_exif
+        Exif? exifInstance = await Exif.fromPath(tempFile.path);
+        if (exifInstance != null) {
+          // Извлекаем геоданные
+          ExifLatLong? coordinates = await exifInstance.getLatLong();
+          imageObject['coordinates'] = coordinates; // Добавляем координаты в объект
+
+          // Опционально: закрываем exifInstance, если не планируешь использовать его снова
+          await exifInstance.close();
+        } else {
+          imageObject['coordinates'] = null;
+        }
+
+        // Сохраняем путь к временному файлу, если он понадобится позже (например, для редактирования)
+        // imageObject['tempFilePath'] = tempFile.path;
+
+      } catch (e, stack) {
+        // Обработка ошибок при загрузке, сохранении или парсинге EXIF
         debugPrint('Ошибка при обработке ${urlImages[i]}: $e');
-//        debugPrintStack(stack: stack);
-        imageObject['exif'] = null;
+        debugPrintStack(stackTrace: stack);
+        imageObject['coordinates'] = null; // В случае ошибки, координат нет
       }
       transformedImages.add(imageObject);
     }
     return transformedImages;
   }
-
-  //function to extract EXIF from bytes
-
-  Future<Map<String, IfdTag>?> _extractExif(Uint8List bytes) async {
-    try{
-      //use exif library
-      Map<String, IfdTag>? exif = await readExifFromBytes(bytes);
-      return exif;
-    } catch(e){
-      debugPrint('Ошибка при извлечении EXIF: $e');
-      return null;  //return null if there any error
-    }
-  }
-
 }
-

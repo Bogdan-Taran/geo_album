@@ -13,6 +13,7 @@ class RootScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool Function()? isPhotoScreenOpen;
     return Scaffold(
       body: navigationShell,
         backgroundColor: backColorScreens,
