@@ -23,7 +23,6 @@ class MapSinglePhotoScreen extends StatelessWidget{
       )
     ];
 
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Карта'),
