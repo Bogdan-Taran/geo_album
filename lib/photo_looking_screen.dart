@@ -2,6 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:native_exif/native_exif.dart'; // Импортируем native_exif
+import 'package:latlong2/latlong.dart';
+import 'package:geo_album/map_photos.dart';
+import 'package:geo_album/map_screen_single_photo.dart';
 
 class PhotoLookingScreen extends StatelessWidget {
   const PhotoLookingScreen({super.key});
@@ -29,19 +32,19 @@ class PhotoLookingScreen extends StatelessWidget {
       );
     }
 
-    // --- Форматирование геоданных ---
-    String gpsInfo = "Геоданные отсутствуют или недоступны.";
+    // формируем геоданные
+    String gpsInfo = "отсутствуют или недоступны.";
     if (coordinates != null) {
       // ExifLatLong имеет поля latitude и longitude как double
       gpsInfo = "Широта: ${coordinates.latitude}, Долгота: ${coordinates.longitude}";
     }
-    // --- Конец форматирования геоданных ---
+    // закончили формировать геоданные
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Фото ${index + 1}'),
       ),
-      body: SingleChildScrollView( // Добавим прокрутку, если контент большой
+      body: SingleChildScrollView( // добавляем прокрутку, если контент большой
         child: Column(
           children: [
             Center(
@@ -58,14 +61,20 @@ class PhotoLookingScreen extends StatelessWidget {
                 style: const TextStyle(fontSize: 14, color: Colors.black),
               ),
             ),
-            // Можно добавить кнопку для открытия карты по координатам
+            // кнопка для открытия карты
             if (coordinates != null) // Показываем кнопку только если координаты есть
               ElevatedButton(
                 onPressed: () {
-                  // TODO: Реализовать открытие карты (например, с помощью url_launcher)
-                  // final uri = Uri.parse('geo:${coordinates.latitude},${coordinates.longitude}');
-                  // await launchUrl(uri);
+                  // конвертим exiflatlong в latlong
+
+                  final latLng = LatLng(coordinates!.latitude, coordinates.longitude);
                   debugPrint('Открыть на карте: ${coordinates?.latitude}, ${coordinates?.longitude}');
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => MapSinglePhotoScreen(coordinates: latLng),
+                      )
+                  );
                 },
                 child: const Text('Открыть на карте'),
               ),
