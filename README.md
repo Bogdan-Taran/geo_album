@@ -4,18 +4,18 @@ A mobile application for viewing photos on a map (made for **Volga-IT**).
 
 The app acts as a smart gallery that lets you switch to an interactive map and see **where your photos were taken** — as long as they contain **geotagged EXIF data**.
 
-![App Preview](https://via.placeholder.com/300x600?text=Map+%2B+Gallery+Preview) <!-- Replace with real screenshot later -->
+
 
 ## 📸 Features
 
-- 🗺️ Display geotagged photos on an interactive map (powered by [Flutter Map](https://pub.dev/packages/flutter_map))
-- 🖼️ Browse images in a clean, scrollable gallery view
-- 📍 Tap any photo on the map to view it in full screen
-- 📂 Local asset-based image loading (manual setup required)
+- Display geotagged photos on an interactive map (powered by [Flutter Map](https://pub.dev/packages/flutter_map))
+- Browse images in a clean, scrollable gallery view
+- Tap any photo on the map to view it in full screen
+- Local asset-based image loading (manual setup required)
 
-## ⚙️ How to Add Your Own Photos
+## How to Add Your Own Photos
 
-> ⚠️ **Note**: The app currently **does not access your device’s photo gallery**. All images must be added manually as assets.
+> **Note**: The app currently **does not access your device’s photo gallery**. All images must be added manually as assets.
 
 ### Step 1: Add images to the assets folder
 Place your geotagged images (JPEG/PNG) into:
@@ -45,7 +45,7 @@ State Management: Provider
 
 
 ### Known Limitations
-❌ No access to device photo library (manual asset loading only)
-❌ Only static image list (no dynamic file scanning)
-❌ PNG support for EXIF is limited (JPEG recommended)
-❌ No offline map caching
+- No access to device photo library (manual asset loading only)
+- Only static image list (no dynamic file scanning)
+- PNG support for EXIF is limited (JPEG recommended)
+- No offline map caching
