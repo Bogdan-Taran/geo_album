@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 // import 'package:native_exif/native_exif.dart'; // Больше не нужен здесь
 import 'package:latlong2/latlong.dart'; // Импортируем LatLng
+import 'package:geocoding/geocoding.dart'; // Импортируем geocoding
 import 'map_photos.dart'; // Путь к файлу
-import 'map_screen_single_photo.dart'; // Путь к файлу
+// Убираем импорт map_screen_single_photo.dart, так как больше не используем его напрямую
+// import 'map_screen_single_photo.dart'; // Путь к файлу
 
 const whiteColor = Colors.white;
 const blackColor = Colors.black;
 const backColorScreens = Color(0xff100F14);
-
 
 class PhotoLookingScreen extends StatelessWidget {
   const PhotoLookingScreen({super.key});
@@ -21,16 +22,12 @@ class PhotoLookingScreen extends StatelessWidget {
 
     List<String>? urlImages;
     int? index;
-    // --- Меняем тип с ExifLatLong? на LatLng? ---
     LatLng? coordinates;
-    // --- Конец изменения ---
 
     if (extraData != null && extraData is Map<String, dynamic>) {
       urlImages = (extraData['urlImages'] as List?)?.cast<String>();
       index = extraData['index'] as int?;
-      // --- Обновляем приведение типа ---
       coordinates = extraData['coordinates'] as LatLng?;
-      // --- Конец обновления ---
     }
 
     if (urlImages == null || index == null || index >= urlImages.length) {
@@ -40,24 +37,56 @@ class PhotoLookingScreen extends StatelessWidget {
       );
     }
 
-    // формируем геоданные
+    // --- Логика получения адреса ---
+    Widget addressWidget = FutureBuilder<String>(
+      future: coordinates != null
+          ? _getAddressFromCoordinates(coordinates!)
+          : Future.value("Геоданные отсутствуют."),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Получение адреса...',
+              style: TextStyle(fontSize: 14, color: Colors.white),
+            ),
+          );
+        } else if (snapshot.hasError) {
+          debugPrint('Ошибка геокодирования: ${snapshot.error}');
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Ошибка получения адреса: ${snapshot.error}',
+              style: const TextStyle(fontSize: 14, color: Colors.red),
+            ),
+          );
+        } else {
+          String address = snapshot.data ?? "Адрес не найден.";
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Адрес: $address',
+              style: const TextStyle(fontSize: 14, color: Colors.white),
+            ),
+          );
+        }
+      },
+    );
+    // --- Конец логики получения адреса ---
+
     String gpsInfo = "отсутствуют или недоступны.";
     if (coordinates != null) {
-      // --- LatLng также имеет поля latitude и longitude ---
       gpsInfo = "Широта: ${coordinates.latitude}, Долгота: ${coordinates.longitude}";
-      // --- Конец обновления ---
     }
-    // закончили формировать геоданные
 
     return Scaffold(
       backgroundColor: backColorScreens,
       appBar: AppBar(
-        title: Text('Фото ${index + 1}', style: TextStyle(color: whiteColor)),
+        title: Text('Фото ${index + 1}', style: const TextStyle(color: whiteColor)),
         backgroundColor: backColorScreens,
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
-        // добавляем прокрутку, если контент большой
         child: Column(
           children: [
             Center(
@@ -66,7 +95,6 @@ class PhotoLookingScreen extends StatelessWidget {
                 fit: BoxFit.contain,
               ),
             ),
-            // Отображаем геоданные
             Container(
               padding: const EdgeInsets.all(16),
               child: Text(
@@ -74,15 +102,15 @@ class PhotoLookingScreen extends StatelessWidget {
                 style: const TextStyle(fontSize: 14, color: Colors.white),
               ),
             ),
-            // кнопка для открытия карты
-            if (coordinates != null) // Показываем кнопку только если координаты есть
+            addressWidget,
+            if (coordinates != null)
               Padding(
-                padding: const EdgeInsets.all(8.0), // Добавим отступ
+                padding: const EdgeInsets.all(8.0),
                 child: Container(
-                  width: 200, // Установи желаемую ширину
-                  height: 50, // Установи желаемую высоту
+                  width: 200,
+                  height: 50,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       colors: <Color>[
                         Color(0xcb1b1b1b),
                         Color(0xcb2b2b2b),
@@ -91,31 +119,34 @@ class PhotoLookingScreen extends StatelessWidget {
                       begin: Alignment.bottomLeft,
                       end: Alignment.topRight,
                     ),
-                    borderRadius: BorderRadius.circular(25), // Закругление краёв
+                    borderRadius: BorderRadius.circular(25),
                   ),
-                  child: Material( // Оберни в Material для правильной отрисовки Ink
-                    color: Colors.transparent, // Прозрачный цвет, чтобы градиент был виден
-                    borderRadius: BorderRadius.circular(25), // То же закругление
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(25),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(25), // То же закругление для InkWell
-                      // --- Вызываем ту же логику, что была в onPressed ---
+                      borderRadius: BorderRadius.circular(25),
+                      // --- Изменяем onTap ---
                       onTap: () {
                         debugPrint('Открыть на карте: ${coordinates?.latitude}, ${coordinates?.longitude}');
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => MapSinglePhotoScreen(coordinates: coordinates!), // coordinates не может быть null здесь из-за if
-                            )
-                        );
+                        // Используем go_router для навигации и передачи координат
+                        // Путь может отличаться, если ты добавлял маршрут в app_routings.dart
+                        // context.push('/map_with_selected_marker', extra: coordinates);
+                        // Или передаём через go, если маршрут вложен или используешь StatefulShell
+                        // context.go('/map_with_selected_marker', extra: coordinates);
+
+                        // Если у тебя нет отдельного маршрута, просто передай в MapPhotosScreen через extra
+                        // Убедись, что MapPhotosScreen может получить это значение
+                        context.go('/map', extra: coordinates); // Предполагаем, что маршрут '/map' ведёт в MapPhotosScreen
                       },
                       // --- Конец изменения onTap ---
-                      child: const Center( // Центрируем текст внутри кнопки
+                      child: const Center(
                         child: Text(
-                          'Открыть на карте', // Текст кнопки
+                          'Открыть на карте',
                           style: TextStyle(
-                            color: Colors.white, // Цвет текста
-                            fontSize: 16, // Размер текста
-                            fontWeight: FontWeight.bold, // Жирность текста (опционально)
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -127,5 +158,30 @@ class PhotoLookingScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<String> _getAddressFromCoordinates(LatLng coordinates) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        coordinates.latitude,
+        coordinates.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+        List<String> addressParts = [
+          if (place.name?.isNotEmpty == true) place.name!,
+          if (place.locality?.isNotEmpty == true) place.locality!,
+          if (place.administrativeArea?.isNotEmpty == true) place.administrativeArea!,
+          if (place.country?.isNotEmpty == true) place.country!,
+        ];
+        return addressParts.join(', ');
+      } else {
+        return "Адрес не найден.";
+      }
+    } catch (e) {
+      debugPrint('Ошибка при геокодировании: $e');
+      rethrow;
+    }
   }
 }
