@@ -9,20 +9,7 @@ import 'package:latlong2/latlong.dart';
 class ImageExifService {
   // --- Переносим список изображений сюда как статическую константу ---
   static const List<String> imagePaths = [
-    'assets/Pictures/image1.png',
-    'assets/Pictures/image2.png',
-    'assets/Pictures/image3.png',
-    'assets/Pictures/image4.jpg',
-    'assets/Pictures/image5.jpg',
-    'assets/Pictures/image6.jpg',
-    'assets/Pictures/image7.jpg',
-    'assets/Pictures/image8.jpg',
-    'assets/Pictures/image9.jpg',
-    'assets/Pictures/image10.jpg',
-    'assets/Pictures/image11.jpg',
-    'assets/Pictures/image12.jpg',
-    'assets/Pictures/image13.jpg',
-    'assets/Pictures/image14.jpg',
+    'assets/Pictures/image1.jpg',
   ];
 
   // --- Конец переноса ---
