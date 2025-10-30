@@ -1,10 +1,10 @@
 // photo_looking_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:native_exif/native_exif.dart'; // Импортируем native_exif
-import 'package:latlong2/latlong.dart';
-import 'package:geo_album/map_photos.dart';
-import 'package:geo_album/map_screen_single_photo.dart';
+// import 'package:native_exif/native_exif.dart'; // Больше не нужен здесь
+import 'package:latlong2/latlong.dart'; // Импортируем LatLng
+import 'map_photos.dart'; // Путь к файлу
+import 'map_screen_single_photo.dart'; // Путь к файлу
 
 class PhotoLookingScreen extends StatelessWidget {
   const PhotoLookingScreen({super.key});
@@ -16,13 +16,16 @@ class PhotoLookingScreen extends StatelessWidget {
 
     List<String>? urlImages;
     int? index;
-    ExifLatLong? coordinates; // Тип для геоданных
+    // --- Меняем тип с ExifLatLong? на LatLng? ---
+    LatLng? coordinates;
+    // --- Конец изменения ---
 
     if (extraData != null && extraData is Map<String, dynamic>) {
       urlImages = (extraData['urlImages'] as List?)?.cast<String>();
       index = extraData['index'] as int?;
-      // Получаем координаты
-      coordinates = extraData['coordinates'] as ExifLatLong?;
+      // --- Обновляем приведение типа ---
+      coordinates = extraData['coordinates'] as LatLng?;
+      // --- Конец обновления ---
     }
 
     if (urlImages == null || index == null || index >= urlImages.length) {
@@ -35,8 +38,9 @@ class PhotoLookingScreen extends StatelessWidget {
     // формируем геоданные
     String gpsInfo = "отсутствуют или недоступны.";
     if (coordinates != null) {
-      // ExifLatLong имеет поля latitude и longitude как double
+      // --- LatLng также имеет поля latitude и longitude ---
       gpsInfo = "Широта: ${coordinates.latitude}, Долгота: ${coordinates.longitude}";
+      // --- Конец обновления ---
     }
     // закончили формировать геоданные
 
@@ -65,14 +69,14 @@ class PhotoLookingScreen extends StatelessWidget {
             if (coordinates != null) // Показываем кнопку только если координаты есть
               ElevatedButton(
                 onPressed: () {
-                  // конвертим exiflatlong в latlong
-
-                  final latLng = LatLng(coordinates!.latitude, coordinates.longitude);
-                  debugPrint('Открыть на карте: ${coordinates?.latitude}, ${coordinates?.longitude}');
+                  // --- Убираем конвертацию, coordinates уже LatLng ---
+                  // final latLng = LatLng(coordinates!.latitude, coordinates.longitude);
+                  debugPrint('Открыть на карте: ${coordinates?.latitude}, ${coordinates?.longitude}'); // coordinates не может быть null здесь из-за if
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => MapSinglePhotoScreen(coordinates: latLng),
+                        // builder: (context) => MapSinglePhotoScreen(coordinates: latLng), // Передаём coordinates напрямую
+                        builder: (context) => MapSinglePhotoScreen(coordinates: coordinates!), // coordinates не может быть null здесь из-за if
                       )
                   );
                 },

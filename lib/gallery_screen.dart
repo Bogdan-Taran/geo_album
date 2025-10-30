@@ -1,10 +1,13 @@
+// gallery_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter/services.dart'; // Для rootBundle
-import 'package:native_exif/native_exif.dart'; // Импортируем native_exif
-import 'package:path_provider/path_provider.dart'; // Для временных файлов
-import 'dart:io'; // Для File
+// import 'package:flutter/services.dart'; // Для rootBundle - теперь не нужен здесь
+// import 'package:native_exif/native_exif.dart'; // Теперь не нужен здесь
+// import 'package:path_provider/path_provider.dart'; // Теперь не нужен здесь
+// import 'dart:io'; // Теперь не нужен здесь
 import 'photo_looking_screen.dart';
+// Импортируем наш сервис
+import 'image_exif_service.dart';
 
 const whiteColor = Colors.white;
 const blackColor = Colors.black;
@@ -29,8 +32,9 @@ class GalleryScreen extends StatelessWidget {
         iconTheme: const IconThemeData(color: whiteColor),
       ),
       body: SafeArea(
-        child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _getSizeOfImagesAndExif(context), // Вызываем новую асинхронную функцию
+        child: FutureBuilder<List<ImageWithLocation>>( // Обновляем тип FutureBuilder
+          // future: _getSizeOfImagesAndExif(context), // Убираем старый метод
+          future: ImageExifService.loadAllImagesWithLocation(), // Вызываем метод из сервиса
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -41,7 +45,12 @@ class GalleryScreen extends StatelessWidget {
               }
               return Center(child: Text('Ошибка: ${snapshot.error}'));
             } else if (snapshot.hasData) {
-              final transformedImages = snapshot.data!;
+              // final transformedImages = snapshot.data!; // Убираем старую переменную
+              final allImagesData = snapshot.data!; // Новая переменная с типом ImageWithLocation
+
+              // Фильтруем, чтобы отображать только изображения (для галереи может быть нужно все)
+              // Но для GridView мы будем использовать все, как и раньше, просто отображая их
+              // и передавая индекс для доступа к данным
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
@@ -57,28 +66,48 @@ class GalleryScreen extends StatelessWidget {
                           crossAxisSpacing: 5,
                           mainAxisSpacing: 5,
                         ),
+                        // itemCount: transformedImages.length, // Меняем на длину нового списка
+                        itemCount: allImagesData.length,
                         itemBuilder: (context, index) {
+                          // final imageData = transformedImages[index]; // Меняем на новый список
+                          final imageData = allImagesData[index];
+
+                          // Пропускаем изображения без пути? (Вряд ли, но на всякий случай)
+                          if (imageData.imagePath.isEmpty) {
+                            // Возвращаем пустой контейнер или заглушку
+                            return Container();
+                          }
+
                           return RawMaterialButton(
                             child: InkWell(
                               child: Ink.image(
-                                image: AssetImage(transformedImages[index]['path']), // Используем путь для отображения
+                                // image: AssetImage(transformedImages[index]['path']), // Меняем на новый путь
+                                image: AssetImage(imageData.imagePath),
                                 height: 300,
                                 fit: BoxFit.cover,
                               ),
                             ),
                             onPressed: () {
-                              context.go('/gallery/photo', extra: {
-                                'urlImages': transformedImages.map((e) => e['path'] as String).toList(),
-                                'index': index,
-                                // Передаём геоданные (если есть)
-                                'coordinates': transformedImages[index]['coordinates'],
-                                // Опционально: передать путь к временному файлу, если PhotoLookingScreen будет его использовать напрямую
-                                // 'tempFilePath': transformedImages[index]['tempFilePath'],
-                              });
+                              // Проверяем, есть ли координаты у этого изображения
+                              if (imageData.location != null) {
+                                // Передаём координаты как LatLng
+                                context.go('/gallery/photo', extra: {
+                                  // 'urlImages': transformedImages.map((e) => e['path'] as String).toList(), // Меняем на новый список
+                                  'urlImages': allImagesData.map((e) => e.imagePath).toList(),
+                                  'index': index,
+                                  'coordinates': imageData.location, // Передаём LatLng напрямую
+                                });
+                              } else {
+                                // Если координат нет, можно передать null или обработать иначе
+                                context.go('/gallery/photo', extra: {
+                                  'urlImages': allImagesData.map((e) => e.imagePath).toList(),
+                                  'index': index,
+                                  'coordinates': null,
+                                });
+                              }
                             },
                           );
                         },
-                        itemCount: transformedImages.length,
                       ),
                     ),
                   ),
@@ -93,59 +122,6 @@ class GalleryScreen extends StatelessWidget {
     );
   }
 
-  // Изменяем функцию для загрузки изображений, получения размера и EXIF
-  Future<List<Map<String, dynamic>>> _getSizeOfImagesAndExif(BuildContext context) async {
-    final urlImages = [
-      'assets/Pictures/image1.png', // Убедись, что файлы существуют
-      'assets/Pictures/image2.png',
-      'assets/Pictures/image3.png',
-      'assets/Pictures/image4.jpg',
-      'assets/Pictures/image5.jpg',
-      'assets/Pictures/image6.jpg',
-      'assets/Pictures/image7.jpg',
-    ];
-
-    List<Map<String, dynamic>> transformedImages = [];
-    for (int i = 0; i < urlImages.length; i++) {
-      final imageObject = <String, dynamic>{};
-      try {
-        // 1. Загружаем байты изображения из ассетов
-        ByteData byteData = await rootBundle.load(urlImages[i]);
-        Uint8List bytes = byteData.buffer.asUint8List();
-
-        // 2. Сохраняем путь и размер
-        imageObject['path'] = urlImages[i];
-        imageObject['size'] = bytes.lengthInBytes;
-
-        // 3. Создаём временный файл
-        final tempDir = await getTemporaryDirectory();
-        final tempFile = File('${tempDir.path}/temp_image_${i}_${DateTime.now().millisecondsSinceEpoch}.jpg'); // Добавим время, чтобы имена не совпадали
-        await tempFile.writeAsBytes(bytes);
-
-        // 4. Извлекаем EXIF данные через native_exif
-        Exif? exifInstance = await Exif.fromPath(tempFile.path);
-        if (exifInstance != null) {
-          // Извлекаем геоданные
-          ExifLatLong? coordinates = await exifInstance.getLatLong();
-          imageObject['coordinates'] = coordinates; // Добавляем координаты в объект
-
-          // Опционально: закрываем exifInstance, если не планируешь использовать его снова
-          await exifInstance.close();
-        } else {
-          imageObject['coordinates'] = null;
-        }
-
-        // Сохраняем путь к временному файлу, если он понадобится позже (например, для редактирования)
-        // imageObject['tempFilePath'] = tempFile.path;
-
-      } catch (e, stack) {
-        // Обработка ошибок при загрузке, сохранении или парсинге EXIF
-        debugPrint('Ошибка при обработке ${urlImages[i]}: $e');
-        debugPrintStack(stackTrace: stack);
-        imageObject['coordinates'] = null; // В случае ошибки, координат нет
-      }
-      transformedImages.add(imageObject);
-    }
-    return transformedImages;
-  }
+// Убираем старый метод _getSizeOfImagesAndExif, так как он теперь в сервисе
+// Future<List<Map<String, dynamic>>> _getSizeOfImagesAndExif(BuildContext context) async { ... }
 }
