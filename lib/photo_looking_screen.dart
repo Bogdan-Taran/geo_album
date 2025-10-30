@@ -6,6 +6,11 @@ import 'package:latlong2/latlong.dart'; // Импортируем LatLng
 import 'map_photos.dart'; // Путь к файлу
 import 'map_screen_single_photo.dart'; // Путь к файлу
 
+const whiteColor = Colors.white;
+const blackColor = Colors.black;
+const backColorScreens = Color(0xff100F14);
+
+
 class PhotoLookingScreen extends StatelessWidget {
   const PhotoLookingScreen({super.key});
 
@@ -45,10 +50,14 @@ class PhotoLookingScreen extends StatelessWidget {
     // закончили формировать геоданные
 
     return Scaffold(
+      backgroundColor: backColorScreens,
       appBar: AppBar(
-        title: Text('Фото ${index + 1}'),
+        title: Text('Фото ${index + 1}', style: TextStyle(color: whiteColor)),
+        backgroundColor: backColorScreens,
+        iconTheme: IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView( // добавляем прокрутку, если контент большой
+      body: SingleChildScrollView(
+        // добавляем прокрутку, если контент большой
         child: Column(
           children: [
             Center(
@@ -62,25 +71,57 @@ class PhotoLookingScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Text(
                 'Геоданные: $gpsInfo',
-                style: const TextStyle(fontSize: 14, color: Colors.black),
+                style: const TextStyle(fontSize: 14, color: Colors.white),
               ),
             ),
             // кнопка для открытия карты
             if (coordinates != null) // Показываем кнопку только если координаты есть
-              ElevatedButton(
-                onPressed: () {
-                  // --- Убираем конвертацию, coordinates уже LatLng ---
-                  // final latLng = LatLng(coordinates!.latitude, coordinates.longitude);
-                  debugPrint('Открыть на карте: ${coordinates?.latitude}, ${coordinates?.longitude}'); // coordinates не может быть null здесь из-за if
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        // builder: (context) => MapSinglePhotoScreen(coordinates: latLng), // Передаём coordinates напрямую
-                        builder: (context) => MapSinglePhotoScreen(coordinates: coordinates!), // coordinates не может быть null здесь из-за if
-                      )
-                  );
-                },
-                child: const Text('Открыть на карте'),
+              Padding(
+                padding: const EdgeInsets.all(8.0), // Добавим отступ
+                child: Container(
+                  width: 200, // Установи желаемую ширину
+                  height: 50, // Установи желаемую высоту
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: <Color>[
+                        Color(0xcb1b1b1b),
+                        Color(0xcb2b2b2b),
+                        Color(0xcb222222),
+                      ],
+                      begin: Alignment.bottomLeft,
+                      end: Alignment.topRight,
+                    ),
+                    borderRadius: BorderRadius.circular(25), // Закругление краёв
+                  ),
+                  child: Material( // Оберни в Material для правильной отрисовки Ink
+                    color: Colors.transparent, // Прозрачный цвет, чтобы градиент был виден
+                    borderRadius: BorderRadius.circular(25), // То же закругление
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(25), // То же закругление для InkWell
+                      // --- Вызываем ту же логику, что была в onPressed ---
+                      onTap: () {
+                        debugPrint('Открыть на карте: ${coordinates?.latitude}, ${coordinates?.longitude}');
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MapSinglePhotoScreen(coordinates: coordinates!), // coordinates не может быть null здесь из-за if
+                            )
+                        );
+                      },
+                      // --- Конец изменения onTap ---
+                      child: const Center( // Центрируем текст внутри кнопки
+                        child: Text(
+                          'Открыть на карте', // Текст кнопки
+                          style: TextStyle(
+                            color: Colors.white, // Цвет текста
+                            fontSize: 16, // Размер текста
+                            fontWeight: FontWeight.bold, // Жирность текста (опционально)
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
           ],
         ),

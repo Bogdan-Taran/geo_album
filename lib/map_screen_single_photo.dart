@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geo_album/photo_looking_screen.dart';
 import 'package:latlong2/latlong.dart';
 
 class MapSinglePhotoScreen extends StatelessWidget{
@@ -24,8 +25,11 @@ class MapSinglePhotoScreen extends StatelessWidget{
     ];
 
     return Scaffold(
+      backgroundColor: backColorScreens,
       appBar: AppBar(
-        title: Text('Карта'),
+        title: Text('Карта', style: TextStyle(color: Colors.white)),
+        backgroundColor: backColorScreens,
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: FlutterMap(
           options: MapOptions(
